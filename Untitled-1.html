@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LMS Dashboard & Courses</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+/* Reset & Base */
+*{margin:0;padding:0;box-sizing:border-box;font-family:Poppins,sans-serif;}
+body{display:flex;min-height:100vh;background:#f0f2f5;}
+
+/* Sidebar */
+.sidebar{width:250px;background:#0d47a1;color:#fff;padding:20px 0;display:flex;flex-direction:column;}
+.sidebar .logo{display:flex;align-items:center;gap:10px;padding:0 20px 30px;font-size:1.4em;font-weight:600;}
+.sidebar .logo i{font-size:2em;}
+.sidebar nav ul{list-style:none;}
+.sidebar nav ul li{margin-bottom:5px;}
+.sidebar nav ul li a{display:flex;align-items:center;padding:12px 20px;color:#c0d9f0;text-decoration:none;transition:.3s;}
+.sidebar nav ul li a i{margin-right:10px;}
+.sidebar nav ul li a:hover,.sidebar nav ul li.active a{background:#0a3d8d;color:#fff;border-left:5px solid #64b5f6;}
+
+/* Main Content */
+.main-content{flex-grow:1;padding:20px;}
+.main-content h2{margin-bottom:20px;color:#333;}
+
+/* Dashboard Cards */
+.stats-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:30px;}
+.stats-cards .card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.05);display:flex;align-items:center;gap:15px;}
+.card i{font-size:2em;color:#fff;padding:15px;border-radius:50%;}
+.total {background-color:#2196f3;}
+.completed {background-color:#4caf50;}
+.inprogress {background-color:#ffc107;color:#333;}
+.dropped {background-color:#f44336;}
+.card-text{display:flex;flex-direction:column;}
+.card-text span{font-size:1.5em;font-weight:600;}
+.card-text small{font-size:0.9em;color:#555;}
+
+/* Courses Table */
+.course-section{background:#fff;padding:20px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.05);}
+.course-section h3{margin-bottom:15px;}
+form input, form select{padding:8px;margin-right:10px;margin-bottom:10px;border-radius:5px;border:1px solid #ccc;}
+form button{padding:8px 12px;border:none;background:#0d47a1;color:#fff;border-radius:5px;cursor:pointer;transition:.3s;}
+form button:hover{background:#06408f;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+table th, table td{border:1px solid #ddd;padding:10px;text-align:center;}
+table th{background:#0d47a1;color:#fff;}
+.filter-buttons button{padding:5px 10px;margin-right:5px;margin-bottom:10px;border:none;border-radius:5px;cursor:pointer;transition:.3s;}
+.filter-buttons button.active{background:#0d47a1;color:#fff;}
+.filter-buttons button:hover{background:#06408f;color:#fff;}
+.edit-btn, .delete-btn{padding:5px 8px;border:none;border-radius:5px;cursor:pointer;color:#fff;}
+.edit-btn{background:#4caf50;}
+.delete-btn{background:#f44336;}
+
+/* Responsive */
+@media(max-width:768px){.sidebar{width:100%;border-radius:15px 15px 0 0;}.stats-cards{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="logo"><i class="fas fa-brain"></i>LMS Station</div>
+    <nav>
+        <ul>
+            <li class="active"><a href="#" onclick="showPage('dashboard')"><i class="fas fa-th-large"></i> Dashboard</a></li>
+            <li><a href="#" onclick="showPage('courses')"><i class="fas fa-book"></i> Courses</a></li>
+            <li><a href="#"><i class="fas fa-tasks"></i> Assignments</a></li>
+            <li><a href="#"><i class="fas fa-user-graduate"></i> Student Info</a></li>
+            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </nav>
+</aside>
+
+<!-- Main Content -->
+<main class="main-content">
+    <!-- Dashboard Page -->
+    <div id="dashboard-page">
+        <h2>Dashboard</h2>
+        <div class="stats-cards">
+            <div class="card total">
+                <i class="fas fa-book"></i>
+                <div class="card-text">
+                    <span id="totalCourses">0</span>
+                    <small>Total Courses</small>
+                </div>
+            </div>
+            <div class="card completed">
+                <i class="fas fa-check-circle"></i>
+                <div class="card-text">
+                    <span id="completedCourses">0</span>
+                    <small>Completed</small>
+                </div>
+            </div>
+            <div class="card inprogress">
+                <i class="fas fa-spinner"></i>
+                <div class="card-text">
+                    <span id="inProgressCourses">0</span>
+                    <small>In Progress</small>
+                </div>
+            </div>
+            <div class="card dropped">
+                <i class="fas fa-times-circle"></i>
+                <div class="card-text">
+                    <span id="droppedCourses">0</span>
+                    <small>Dropped</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses Page -->
+    <div id="courses-page" style="display:none;">
+        <h2>Courses</h2>
+        <div class="course-section">
+            <h3>Add New Course</h3>
+           <form id="courseForm">
+    <input type="text" placeholder="Course Name" id="courseName" required>
+    <input type="number" placeholder="Credit Hours" id="creditHours" required>
+    <input type="time" id="startTime" required>
+    <input type="time" id="endTime" required>
+    <input type="text" placeholder="Instructor" id="instructor" required>
+    <input type="text" placeholder="Classroom" id="classroom" required>
+    <select id="status" required>
+        <option value="In Progress">In Progress</option>
+        <option value="Completed">Completed</option>
+        <option value="Dropped">Dropped</option>
+    </select>
+    <button type="submit">Add Course</button>
+    <button type="button" onclick="cancelEdit()">Cancel</button>
+</form>
+
+            <div class="filter-buttons">
+                <button onclick="filterCourses(event, 'All')" class="active">All</button>
+                <button onclick="filterCourses(event, 'Completed')">Completed</button>
+                <button onclick="filterCourses(event, 'In Progress')">In Progress</button>
+                <button onclick="filterCourses(event, 'Dropped')">Dropped</button>
+            </div>
+            <input type="text" id="searchInput" placeholder="Search by Name or Instructor" style="padding:5px 10px;margin-bottom:10px;width:100%;border-radius:5px;border:1px solid #ccc;">
+            <table id="coursesTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Credit Hours</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Instructor</th>
+                        <th>Classroom</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+
+// Pages Switching
+function showPage(page){
+    document.getElementById('dashboard-page').style.display = page==='dashboard'?'block':'none';
+    document.getElementById('courses-page').style.display = page==='courses'?'block':'none';
+    document.querySelectorAll('.sidebar nav ul li').forEach(li=>li.classList.remove('active'));
+    if(page==='dashboard') document.querySelector('.sidebar nav ul li:first-child').classList.add('active');
+    if(page==='courses') document.querySelector('.sidebar nav ul li:nth-child(2)').classList.add('active');
+}
+
+
+//  Load courses + Auto Save باستخدام Proxy
+let courses = JSON.parse(localStorage.getItem('courses')) || [
+    {name:"Math", credit:3, start:"08:00", end:"09:30", instructor:"Dr. A", classroom:"101", status:"Dropped"},
+    {name:"Physics", credit:4, start:"10:00", end:"11:30", instructor:"Dr. B", classroom:"102", status:"In Progress"},
+    {name:"General to chemical CHEM 104", credit:3, start:"12:30", end:"13:30", instructor:"Dr.D", classroom:"201", status:"In Progress"},
+    {name:"Introducrion to programming CPE 150", credit:3, start:"13:30", end:"14:30", instructor:"Dr.E", classroom:"207", status:"In Progress"},
+    {name:"Lab Introducrion to programming CPE 150L", credit:1, start:"14:30", end:"17:30", instructor:"", classroom:"104", status:"In Progress"},
+    {name:"Introducrion to engineer BME 152", credit:3, start:"11:30", end:"12:30", instructor:"Dr.C", classroom:"201", status:"Completed"}
+];
+
+courses = new Proxy(courses, {
+    set(target, property, value) {
+        target[property] = value;
+        localStorage.setItem('courses', JSON.stringify(target));
+        updateDashboard();
+        renderCourses();
+        return true;
+    }
+});
+
+let filter = 'All';
+let editIndex = null;
+let isEditing = false;
+
+// Dashboard
+function updateDashboard(){
+    document.getElementById('totalCourses').innerText = courses.length;
+    document.getElementById('completedCourses').innerText = courses.filter(c=>c.status==="Completed").length;
+    document.getElementById('inProgressCourses').innerText = courses.filter(c=>c.status==="In Progress").length;
+    document.getElementById('droppedCourses').innerText = courses.filter(c=>c.status==="Dropped").length;
+}
+
+function normalize(text){
+    return text.trim().toLowerCase();
+}
+
+// Render
+function renderCourses(){
+    let tbody = document.querySelector('#coursesTable tbody');
+    tbody.innerHTML = '';
+
+let filtered = courses
+    .map((c,index)=>({...c, originalIndex:index}))
+    .filter(c => {
+        if(filter === 'All') return true;
+        return normalize(c.status) === normalize(filter);
+    })
+    .sort((a,b)=>a.start.localeCompare(b.start));
+  document.querySelector('.course-section h3').innerText =
+    `Courses (${filtered.length})`;
+     if(filtered.length === 0){
+        tbody.innerHTML = `<tr><td colspan="8">No courses found</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(c=>{
+        let row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${c.name}</td>
+            <td>${c.credit}</td>
+            <td>${c.start}</td>
+            <td>${c.end}</td>
+            <td>${c.instructor}</td>
+            <td>${c.classroom}</td>
+            <td>${c.status}</td>
+            <td>
+                <button class="edit-btn" onclick="editCourse(${c.originalIndex})">Edit</button>
+                <button class="delete-btn" onclick="deleteCourse(${c.originalIndex})">Delete</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+
+// Submit (Add / Edit)
+document.getElementById('courseForm').addEventListener('submit', function(e){
+    e.preventDefault();
+
+    let newCourse = {
+        name: document.getElementById('courseName').value,
+        credit: parseInt(document.getElementById('creditHours').value),
+        start: document.getElementById('startTime').value,
+        end: document.getElementById('endTime').value,
+        instructor: document.getElementById('instructor').value,
+        classroom: document.getElementById('classroom').value,
+        status: document.getElementById('status').value.trim()
+    };
+
+    // 1. Prevent invalid time
+    if(newCourse.end <= newCourse.start){
+        alert("End time must be after start time.");
+        return;
+    }
+
+    //  2. Prevent time conflict
+    let conflict = courses.some((c, index) => {
+
+        // Ignore same course when editing
+        if(index === editIndex) return false;
+
+        return (
+            newCourse.start < c.end &&
+            newCourse.end > c.start
+        );
+    });
+
+    if(conflict){
+        alert("This course conflicts with another course time.");
+        return;
+    }
+
+    //  Add or Edit (your original logic preserved)
+   if(isEditing){
+    courses[editIndex] = newCourse;
+} else {
+    courses.push(newCourse);
+}
+
+cancelEdit();
+});
+
+function cancelEdit(){
+    editIndex = null;
+    isEditing = false;
+    document.getElementById('courseForm').reset();
+    document.querySelector('#courseForm button').innerText = "Add Course";
+    localStorage.removeItem('editDraft');
+    localStorage.removeItem('editIndex');
+}
+
+// Edit
+function editCourse(index){
+    let c = courses[index];
+    editIndex = index;
+    isEditing = true;
+
+    courseName.value = c.name;
+    creditHours.value = c.credit;
+    startTime.value = c.start;
+    endTime.value = c.end;
+    instructor.value = c.instructor;
+    classroom.value = c.classroom;
+    status.value = c.status;
+
+    document.querySelector('#courseForm button').innerText = "Update Course";
+
+    localStorage.setItem('editIndex', index);
+}
+
+
+// Delete
+function deleteCourse(index){
+    if(confirm("Are you sure you want to delete this course?")){
+        courses.splice(index,1);
+    }
+}
+
+
+// Filter
+function filterCourses(event, f){
+    filter = f;
+    document.querySelectorAll('.filter-buttons button')
+        .forEach(btn=>btn.classList.remove('active'));
+    event.target.classList.add('active');
+    renderCourses();
+}
+
+
+//  Auto Save Draft (الفورم)
+const formFields = [
+    'courseName',
+    'creditHours',
+    'startTime',
+    'endTime',
+    'instructor',
+    'classroom',
+    'status'
+];
+
+formFields.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+
+        if(isEditing){
+            let draft = {
+                index: editIndex,
+                data: {}
+            };
+
+            formFields.forEach(f => {
+                draft.data[f] = document.getElementById(f).value;
+            });
+
+            localStorage.setItem('editDraft', JSON.stringify(draft));
+        } else {
+            let formData = {};
+            formFields.forEach(f => {
+                formData[f] = document.getElementById(f).value;
+            });
+
+            localStorage.setItem('draftCourse', JSON.stringify(formData));
+        }
+    });
+});
+
+
+window.addEventListener('load', () => {
+
+    let savedDraft = localStorage.getItem('draftCourse');
+    if(savedDraft){
+        let data = JSON.parse(savedDraft);
+        formFields.forEach(f => {
+            if(data[f]) document.getElementById(f).value = data[f];
+        });
+    }
+
+  
+    let savedEdit = localStorage.getItem('editIndex');
+    let savedEditDraft = localStorage.getItem('editDraft');
+
+    if(savedEdit !== null){
+        editIndex = parseInt(savedEdit);
+        isEditing = true;
+        document.querySelector('#courseForm button').innerText = "Update Course";
+    }
+
+    if(savedEditDraft){
+        let draft = JSON.parse(savedEditDraft);
+
+        formFields.forEach(f => {
+            if(draft.data[f]){
+                document.getElementById(f).value = draft.data[f];
+            }
+        });
+    }
+});
+
+// البحث الفوري
+document.getElementById('searchInput').addEventListener('input', function() {
+    let query = this.value.trim().toLowerCase();
+    renderCourses(query);
+});
+
+// تعديل دالة renderCourses لتقبل استعلام البحث
+function renderCourses(searchQuery = ''){
+    let tbody = document.querySelector('#coursesTable tbody');
+    tbody.innerHTML = '';
+
+    let filtered = courses
+        .map((c,index)=>({...c, originalIndex:index}))
+        .filter(c => {
+            // فلترة حسب الحالة
+            let statusMatch = filter==='All' || normalize(c.status)===normalize(filter);
+            // فلترة حسب البحث
+            let searchMatch = c.name.toLowerCase().includes(searchQuery) || c.instructor.toLowerCase().includes(searchQuery);
+            return statusMatch && searchMatch;
+        })
+        .sort((a,b)=>a.start.localeCompare(b.start));
+
+    document.querySelector('.course-section h3').innerText = `Courses (${filtered.length})`;
+
+    if(filtered.length === 0){
+        tbody.innerHTML = `<tr><td colspan="8">No courses found</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(c=>{
+        let row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${c.name}</td>
+            <td>${c.credit}</td>
+            <td>${c.start}</td>
+            <td>${c.end}</td>
+            <td>${c.instructor}</td>
+            <td>${c.classroom}</td>
+            <td>${c.status}</td>
+            <td>
+                <button class="edit-btn" onclick="editCourse(${c.originalIndex})">Edit</button>
+                <button class="delete-btn" onclick="deleteCourse(${c.originalIndex})">Delete</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Initial Load
+updateDashboard();
+renderCourses();
+
+</script>
+
+</body>
+</html>
